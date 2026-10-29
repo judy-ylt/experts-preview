@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>專家詳情預覽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #004896; --brand-ink: #004896; --brand-deep: #004896; --accent: #3BB3F0;
+    --ink: #111827; --body: #374151; --muted: #6b7280; --line: #e5e7eb;
+    --soft: color-mix(in srgb, var(--brand) 5%, #f5f6f8);   /* 淡主色灰：段落交替用 */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-padding-top: 76px; }
+  body { background: #fff; color: var(--ink); font-family: "Noto Sans TC", system-ui, sans-serif; line-height: 1.6; }
+  a { color: inherit; }
+  ul { list-style: none; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 8px; }
+
+  /* 預覽工具列 */
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: #f9fafb; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+  .toolbar button { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer; }
+  .toolbar button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+  .toolbar a { padding: 4px 12px; border-radius: 999px; text-decoration: none; border: 1px solid var(--line); }
+  .toolbar a[aria-current] { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  /* 共用 */
+  .pill { display: inline-flex; align-items: center; padding: 6px 16px; border-radius: 999px; font-size: 14px;
+    background: color-mix(in srgb, var(--brand) 9%, transparent); color: var(--brand-ink); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 28px; border-radius: 999px;
+    font-size: 16px; font-weight: 600; text-decoration: none; transition: background .2s, border-color .2s, color .2s; }
+  /* #237 箭頭接力：滑過時箭頭往右滑出、再從左邊滑回來 */
+  .btn .arrow { display: inline-block; }
+  .btn:hover .arrow { animation: arrow-relay .5s cubic-bezier(.33,1,.68,1); }
+  @keyframes arrow-relay { 0% { transform: none; opacity: 1; } 45% { transform: translateX(14px); opacity: 0; }
+    46% { transform: translateX(-14px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .btn:hover .arrow { animation: none; } }
+  .btn--primary { background: var(--brand-ink); color: #fff; }
+  .btn--primary:hover { background: color-mix(in srgb, var(--brand-ink) 85%, black); }
+  .btn--white { background: #fff; color: var(--brand-ink); }
+  .btn--white:hover { background: #eef2f7; }
+  .btn--line { border: 1px solid rgba(255,255,255,.6); color: #fff; }
+  .btn--line:hover { background: rgba(255,255,255,.12); border-color: #fff; }
+  .label { font-family: "Barlow Semi Condensed", sans-serif; font-weight: 600; font-size: 13px; letter-spacing: .3em; color: var(--brand-ink); }
+
+  /* 頁首 */
+  .bar { background: #fff; border-bottom: 1px solid var(--line); }
+  .bar .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .logo { font-weight: 700; color: var(--brand-ink); text-decoration: none; line-height: 1.2; }
+  .logo small { display: block; font-family: "Barlow Semi Condensed", sans-serif; font-size: 11px; letter-spacing: .2em; color: var(--muted); }
+  .bar nav { display: flex; gap: 28px; font-size: 15px; }
+  .bar nav a { text-decoration: none; color: var(--body); }
+  .bar nav a:hover { color: var(--brand-ink); }
+  .bar .btn { min-height: 40px; padding: 0 20px; font-size: 14px; }
+
+  /* ① 主視覺：滿版主色色帶，照片往下跨出色帶 */
+  .hero { position: relative; color: #fff;
+    background: linear-gradient(120deg, var(--brand-deep) 0%, var(--brand-deep) 55%, color-mix(in srgb, var(--brand-deep) 80%, var(--accent)) 100%); }
+  .hero .wrap { position: relative; display: grid; grid-template-columns: 1fr 360px; gap: 0 48px; padding-top: 8px; padding-bottom: 36px; }
+  .back { grid-column: 1 / -1; justify-self: start; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-bottom: 8px; font-size: 14px; color: rgba(255,255,255,.75); text-decoration: none; }
+  .back:hover { color: #fff; }
+  .hero__text { align-self: center; }
+  .hero__fields { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .hero__fields li { padding: 4px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.55); font-size: 13px; }
+  .hero h1 { font-size: 72px; font-weight: 900; line-height: 1.05; letter-spacing: .08em; }
+  .hero h1 small { font-size: 22px; font-weight: 500; letter-spacing: .15em; margin-left: 12px; opacity: .8; }
+  .hero__roles { display: flex; align-items: center; gap: 16px; margin: 24px 0 32px; }
+  .hero__roles::before { content: ""; flex: none; width: 48px; height: 1px; background: rgba(255,255,255,.6); } /* 細線把視線帶到職務 */
+  .hero__roles ul { display: grid; gap: 4px; font-size: 16px; color: rgba(255,255,255,.9); }
+  .hero__cta { display: flex; flex-wrap: wrap; gap: 12px; }
+  /* 圓形破框（同列表卡片），圓形改白色漸層；在色帶裡上下置中 */
+  .portrait { grid-row: 2; grid-column: 2; position: relative; align-self: center; aspect-ratio: 4 / 5; transform: translateY(-4%); } /* 讓「頭頂到圓底」整個人像對準色帶中心 */
+  .portrait__bg { position: absolute; inset: 20% 0 0 0; border-radius: 50%;
+    background: linear-gradient(180deg, color-mix(in srgb, #fff 95%, var(--brand-deep)) 0%, color-mix(in srgb, #fff 55%, var(--brand-deep)) 50%, color-mix(in srgb, #fff 12%, var(--brand-deep)) 100%); } /* 不透明，點陣不會透出來 */
+  /* 比較版：上方很淡、往下越白 */
+  [data-circle="up"] .portrait__bg { background: linear-gradient(180deg, color-mix(in srgb, #fff 12%, var(--brand-deep)) 0%, color-mix(in srgb, #fff 50%, var(--brand-deep)) 55%, color-mix(in srgb, #fff 92%, var(--brand-deep)) 100%); }
+  .portrait img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top;
+    -webkit-mask: linear-gradient(#000 0 0) top / 100% 60% no-repeat, radial-gradient(circle closest-side at 50% 60%, #000 calc(100% - .5px), transparent 100%);
+            mask: linear-gradient(#000 0 0) top / 100% 60% no-repeat, radial-gradient(circle closest-side at 50% 60%, #000 calc(100% - .5px), transparent 100%); }
+
+  /* ---- 色帶幾何裝飾（比較用）：都放在照片後方、低透明度白色 ---- */
+  .hero { overflow: hidden; }
+  .hero__deco { position: absolute; inset: 0; pointer-events: none; }
+  .hero .wrap { z-index: 1; }
+  /* A 同心圓：呼應圓形照片，從照片中心往外擴散 */
+  [data-deco="rings"] .hero__deco { background:
+    repeating-radial-gradient(circle at 77% 55%, transparent 0 79px, rgba(255,255,255,.10) 79px 80px); 
+    -webkit-mask: radial-gradient(circle at 77% 55%, #000 0, #000 30%, transparent 62%); mask: radial-gradient(circle at 77% 55%, #000 0, #000 30%, transparent 62%); }
+  /* B 點陣：左下與右上角落 */
+  [data-deco="dots"] .hero__deco { background-image: radial-gradient(rgba(255,255,255,.3) 1.5px, transparent 1.7px); background-size: 22px 22px;
+    /* 範圍放大：右側大片（照片後方）＋左下角，往文字區淡出，不干擾閱讀 */
+    -webkit-mask: radial-gradient(ellipse 42% 90% at 96% 40%, #000 20%, transparent 75%), radial-gradient(ellipse 45% 70% at 0% 100%, #000 10%, transparent 72%);
+            mask: radial-gradient(ellipse 42% 90% at 96% 40%, #000 20%, transparent 75%), radial-gradient(ellipse 45% 70% at 0% 100%, #000 10%, transparent 72%); }
+  @media (max-width: 767px) {
+    [data-deco="dots"] .hero__deco { background-size: 18px 18px;
+      -webkit-mask: radial-gradient(ellipse 90% 45% at 50% 18%, #000 20%, transparent 80%); mask: radial-gradient(ellipse 90% 45% at 50% 18%, #000 20%, transparent 80%); }
+  }
+  /* C 細格線：淡淡的方格，往中間淡出 */
+  [data-deco="grid"] .hero__deco { background-image: linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+    background-size: 56px 56px; background-position: center;
+    -webkit-mask: linear-gradient(90deg, transparent 0%, #000 55%, #000 100%); mask: linear-gradient(90deg, transparent 0%, #000 55%, #000 100%); }
+  /* D 大圓弧：兩個超大的淡色圓，一半在畫面外 */
+  [data-deco="arcs"] .hero__deco::before, [data-deco="arcs"] .hero__deco::after { content: ""; position: absolute; border-radius: 50%; }
+  [data-deco="arcs"] .hero__deco::before { width: 760px; height: 760px; right: -220px; top: -260px; background: rgba(255,255,255,.06); }
+  [data-deco="arcs"] .hero__deco::after { width: 420px; height: 420px; left: -160px; bottom: -220px; border: 1px solid rgba(255,255,255,.18); }
+  @media (max-width: 767px) {
+    [data-deco="rings"] .hero__deco { background: repeating-radial-gradient(circle at 50% 22%, transparent 0 59px, rgba(255,255,255,.10) 59px 60px);
+      -webkit-mask: radial-gradient(circle at 50% 22%, #000 0, #000 25%, transparent 55%); mask: radial-gradient(circle at 50% 22%, #000 0, #000 25%, transparent 55%); }
+  }
+  /* ② 數據：放進色帶底部（預設）；另一版為浮在色帶邊緣的白卡 */
+  .stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 40px; padding-top: 28px; border-top: 1px solid rgba(255,255,255,.22); }
+  .stat { text-align: center; } /* 每個數值在自己的欄位內置中 */
+  .stat + .stat { border-left: 1px solid rgba(255,255,255,.22); }
+  .stat b { display: block; font-family: "Barlow Semi Condensed", sans-serif; font-size: 44px; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; }
+  .stat span { display: block; margin-top: 8px; font-size: 15px; color: rgba(255,255,255,.75); }
+  /* 數據共用的總標（例「累積授課與輔導」），下面每格只寫單位，不再重複整句 */
+  .stats__cap { grid-column: 1 / -1; margin-bottom: 18px; text-align: center; font-size: 14px; letter-spacing: .1em; color: rgba(255,255,255,.75); }
+  /* 浮動白卡版 */
+  [data-stats="card"] .hero .wrap { padding-bottom: 0; z-index: 6; } /* 讓白卡壓在下方導覽列之上 */
+  [data-stats="card"] .stats { position: relative; z-index: 6; margin: 40px 0 -56px; padding: 28px 40px; border: 0; border-radius: 28px; background: #fff;
+    box-shadow: 0 12px 36px rgba(17,24,39,.12); }
+  [data-stats="card"] .hero { overflow: visible; }
+  [data-stats="card"] .hero__deco { overflow: hidden; }
+  [data-stats="card"] .stat + .stat { border-left-color: var(--line); }
+  [data-stats="card"] .stat b { color: var(--brand-ink); }
+  [data-stats="card"] .stat span { color: var(--muted); }
+  [data-stats="card"] .subnav .wrap { padding-top: 76px; }
+  /* 頁內導覽 */
+  .subnav { position: sticky; top: 0; z-index: 5; background: #fff; border-bottom: 1px solid var(--line); }
+  .subnav .wrap { display: flex; gap: 16px; padding-top: 10px; padding-bottom: 10px; overflow-x: auto; scrollbar-width: none; }
+  .subnav .wrap::-webkit-scrollbar { display: none; }
+  .subnav a { flex: none; display: inline-flex; align-items: center; min-height: 42px; padding: 0 16px; border-radius: 999px; font-size: 14px;
+    text-decoration: none; color: var(--body); background: #fff; border: 1px solid #d9dde3; transition: color .2s, background .2s, border-color .2s;
+    justify-content: center; min-width: 176px; font-size: 15px; } /* 只有 3 項，加寬讓選單撐開 */
+  /* 置中；項目多到放不下時仍可左右滑（用 auto 邊距置中，滑動時左邊不會被切掉） */
+  .subnav a:first-child { margin-left: auto; }
+  .subnav a:last-child { margin-right: auto; }
+  .subnav a:hover { border-color: var(--brand-ink); color: var(--brand-ink); }
+  .subnav a[aria-current="true"] { background: color-mix(in srgb, var(--brand) 10%, white); border-color: var(--brand-ink); color: var(--brand-ink); font-weight: 600; }
+
+  /* ④ 段落：左標題、右內容；背景交替 */
+  .sec { padding: 88px 0; }
+  .sec--soft { background: var(--soft); }
+  /* 灰底段落加淡淡主色點陣（呼應主視覺）：只在右上角，往內淡出，不壓到文字 */
+  .sec--soft { position: relative; overflow: clip; } /* 用 clip 不用 hidden：hidden 會讓左側標題的「跟著捲動」失效 */
+  .sec--soft::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(color-mix(in srgb, var(--brand) 22%, transparent) 1.5px, transparent 1.7px); background-size: 22px 22px;
+    -webkit-mask: radial-gradient(ellipse 38% 70% at 100% 0%, #000 15%, transparent 75%), radial-gradient(ellipse 28% 55% at 0% 100%, #000 10%, transparent 72%);
+            mask: radial-gradient(ellipse 38% 70% at 100% 0%, #000 15%, transparent 75%), radial-gradient(ellipse 28% 55% at 0% 100%, #000 10%, transparent 72%); }
+  .sec--soft .wrap { position: relative; }
+  .sec .wrap { display: grid; grid-template-columns: 280px 1fr; gap: 56px; }
+  .sec__head h2 { font-size: 30px; line-height: 1.3; letter-spacing: .05em; margin-top: 6px; }
+  .sec__head h2::after { content: ""; display: block; width: 36px; height: 3px; border-radius: 2px; background: var(--brand); margin-top: 16px; } /* 標題下短色條 */
+  .sec__head p { margin-top: 16px; color: var(--muted); font-size: 15px; }
+  .sec__head { position: sticky; top: 96px; align-self: start; }
+
+  .services { display: grid; gap: 20px; }
+  .svc { background: #fff; border: 1px solid color-mix(in srgb, var(--brand) 8%, var(--line)); box-shadow: 0 1px 3px rgba(17,24,39,.04); border-radius: 28px; padding: 28px 32px; }
+  .svc h3 { display: flex; align-items: baseline; justify-content: space-between; font-size: 19px; padding-bottom: 16px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+  .svc h3 span { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .dots { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 32px; font-size: 15px; }
+  .dots--one { grid-template-columns: 1fr; }
+  .dots li { position: relative; padding-left: 20px; color: var(--body); }
+  .dots li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); opacity: .5; }
+  .dots b { display: block; color: var(--ink); font-weight: 600; }
+  .sec--soft .midcta { background: #fff; border: 1px solid var(--line); }
+  .midcta { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 20px 20px 20px 32px; border-radius: 999px; background: var(--soft); }
+  .midcta b { color: var(--ink); }
+  .midcta p { color: var(--body); }
+
+  .sub { font-size: 14px; font-weight: 500; color: var(--muted); margin-bottom: 12px; }
+  .skills { display: flex; flex-wrap: wrap; gap: 10px; }
+  .skills + .sub { margin-top: 32px; }
+  .skills--field .pill { background: #fff; border: 1px solid color-mix(in srgb, var(--brand) 30%, transparent); font-weight: 600; }
+  .skills .pill { font-size: 15px; padding: 8px 18px; }
+  .sec--soft .skills:not(.skills--field) .pill { background: #fff; }
+  /* 專長：分組條列（取代一整片一樣的膠囊），沒分組時就一組不加小標 */
+  .skillcols { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 28px 32px; }
+  .skillcols h3 { font-size: 16px; color: var(--brand-ink); margin-bottom: 14px; }
+  .skillcols .dots { gap: 10px; }
+  .skillcols--flat .dots { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .skills--field { margin-bottom: 36px; }
+  /* 服務清單：手機版預設只顯示前 3 項，可展開 */
+  .svc__more { display: none; }
+  /* 資料少的老師：邀請句直接放進主視覺，不另開一段 */
+  .hero__invite { margin: -12px 0 28px; font-size: 15px; color: var(--body); }
+  .hero__invite b { display: block; font-size: 17px; color: var(--ink); margin-bottom: 2px; }
+
+  /* ⑤ 經歷分欄＋主色細線 */
+  .cols { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 32px; }
+  .col { border-top: 2px solid var(--brand); padding-top: 20px; }
+  .col h3 { font-size: 17px; margin-bottom: 16px; color: var(--brand-ink); }
+  .col ul { display: grid; gap: 12px; font-size: 15px; color: var(--body); }
+  .col li { padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .col a { display: flex; justify-content: space-between; gap: 8px; text-decoration: none; }
+  .col a:hover { color: var(--brand-ink); }
+  .col a small { display: block; color: var(--muted); font-size: 13px; }
+
+  /* ⑥ 行動呼籲：滿版主色色帶 */
+  .cta { color: #fff; background: linear-gradient(120deg, var(--brand-deep) 0%, var(--brand-deep) 55%, color-mix(in srgb, var(--brand-deep) 80%, var(--accent)) 100%); }
+  .cta .wrap { display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap; padding-top: 72px; padding-bottom: 72px; }
+  .cta h2 { font-size: 30px; letter-spacing: .04em; line-height: 1.4; }
+  .cta p { opacity: .85; margin-top: 8px; }
+
+  /* 相關領域專家：跟總覽頁同一套（淡主色底＋點陣、靠左標題＋細線、圓形卡片、按鈕整合進頭像） */
+  .more { position: relative; overflow: clip; background: var(--soft); padding: 88px 0 96px; }
+  .more::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(color-mix(in srgb, var(--brand) 22%, transparent) 1.5px, transparent 1.7px); background-size: 22px 22px;
+    -webkit-mask: radial-gradient(ellipse 34% 45% at 100% 0%, #000 15%, transparent 75%), radial-gradient(ellipse 30% 40% at 0% 100%, #000 10%, transparent 72%);
+            mask: radial-gradient(ellipse 34% 45% at 100% 0%, #000 15%, transparent 75%), radial-gradient(ellipse 30% 40% at 0% 100%, #000 10%, transparent 72%); }
+  .more .wrap { position: relative; z-index: 1; }
+  .more .head { margin-bottom: 40px; }
+  .more .head__top { display: flex; align-items: center; gap: 28px; }
+  .more .head h2 { flex: none; font-size: 40px; font-weight: 700; line-height: 1.3; letter-spacing: .06em; }
+  .more .head__line { flex: 1; height: 1px; background: color-mix(in srgb, var(--brand-ink) 35%, transparent); }
+  .hl { color: var(--brand-ink); }
+  .more .head__sub { margin-top: 10px; color: var(--muted); font-size: 16px; }
+  .grid { --gap: 28px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 var(--gap); }
+  .card { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-row: span 5; grid-template-rows: subgrid; row-gap: 0; text-align: center; }
+  a.photo { position: relative; display: block; width: 100%; align-self: start; aspect-ratio: 4 / 5; cursor: pointer; text-decoration: none; }
+  .photo__bg { position: absolute; inset: calc(20% + 1.5px) 1.5px 1.5px 1.5px; border-radius: 50%; transition: background .4s ease;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 22%, transparent) 0%, color-mix(in srgb, var(--brand) 70%, transparent) 50%, var(--brand) 100%); }
+  .photo__person { position: absolute; z-index: 2; inset: 0; clip-path: inset(-40% 0 0 0);
+    -webkit-mask: linear-gradient(#000 0 0) top / 100% 60% no-repeat, radial-gradient(circle closest-side at 50% 60%, #000 calc(100% - .5px), transparent 100%);
+            mask: linear-gradient(#000 0 0) top / 100% 60% no-repeat, radial-gradient(circle closest-side at 50% 60%, #000 calc(100% - .5px), transparent 100%); }
+  .photo__person img { width: 100%; height: 100%; object-fit: cover; object-position: center top; transform-origin: center bottom; transition: transform .4s cubic-bezier(.33,1,.68,1); }
+  .photo::after { content: ""; position: absolute; z-index: 3; inset: 0; background: linear-gradient(to top, var(--brand-deep) 0%, transparent 28%);
+    -webkit-mask: radial-gradient(circle closest-side at 50% 60%, #000 calc(100% - .5px), transparent 100%); mask: radial-gradient(circle closest-side at 50% 60%, #000 calc(100% - .5px), transparent 100%); }
+  .photo__name { position: absolute; z-index: 4; left: 10%; right: 10%; bottom: 8%; color: #fff; font-size: 26px; font-weight: 700; line-height: 1.2; letter-spacing: .12em;
+    transition: opacity .22s ease .12s, transform .3s cubic-bezier(.33,1,.68,1) .12s; } /* 離開時：文字先收、名字再回來 */
+  .photo__initial { position: absolute; z-index: 1; inset: 20% 0 0 0; display: grid; place-items: center; font-size: 96px; font-weight: 700; line-height: 1; color: #fff; opacity: .55; }
+  .photo__initial > span { transform: translateY(-.04em); }
+  /* 懸停頭像：圓形變實心主色，名字接力換成「查看完整經歷 →」 */
+  .photo__hover { position: absolute; z-index: 5; left: 10%; right: 10%; bottom: 8%; color: #fff; font-size: 16px; font-weight: 700; letter-spacing: .06em;
+    opacity: 0; transform: translateY(10px); transition: opacity .22s ease, transform .3s cubic-bezier(.33,1,.68,1); }
+  .photo:hover .photo__hover, .photo:focus-visible .photo__hover { opacity: 1; transform: none; transition-delay: .12s; }
+  .photo:hover .photo__name, .photo:focus-visible .photo__name { opacity: 0; transform: translateY(-10px); transition-delay: 0s; }
+  .photo:hover .photo__bg, .photo:focus-visible .photo__bg { background: var(--brand-ink); }
+  .card:has(a:hover) .photo__person img { transform: scale(1.03); }
+  .photo:focus-visible { outline: none; }
+  .photo:focus-visible .photo__bg { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--brand-ink); }
+  .exp { min-width: 0; padding-top: 14px; font-size: 14px; line-height: 1.7; color: var(--body); }
+  .exp li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tags { display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start; gap: 6px; padding-top: 12px; }
+  .tags li { font-size: 13px; line-height: 1.5; padding: 3px 12px; border-radius: 999px; color: var(--brand-ink); background: #fff; }
+  /* 老師的一段話：選填、最多 3 行；沒寫的不畫框但保留列高，同排對齊 */
+  .quote-wrap { padding-top: 16px; }
+  .quote { margin: 0; padding: 14px 16px; border-radius: 20px; background: #fff; font-size: 14px; line-height: 1.7; color: var(--body); }
+  .quote p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .quote:not(:has(p)) { display: none; }
+  /* 有滑鼠：按鈕整合進頭像，下方不放；觸控裝置沒有懸停，保留文字連結 */
+  .card__more { align-self: end; padding-top: 16px; }
+  .card__more a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; font-size: 14px; font-weight: 600; color: var(--brand-ink); text-decoration: none; }
+  @media (hover: hover) and (pointer: fine) { .card__more { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .photo__name, .photo__hover, .photo__bg, .photo__person img { transition: none !important; } .card:has(a:hover) .photo__person img { transform: none; } }
+  .more__all { margin-top: 56px; text-align: center; }
+  /* 資料少的老師：主視覺直接接這段，改白底避免兩塊淡灰黏在一起；白底上的標籤、一段話框改淡主色才看得出來 */
+  .more--white { background: #fff; }
+  .more--white .tags li, .more--white .quote { background: color-mix(in srgb, var(--brand) 6%, white); }
+  .btn--ghost { border: 1px solid color-mix(in srgb, var(--brand-ink) 45%, transparent); color: var(--brand-ink); background: #fff; }
+  .btn--ghost:hover { border-color: var(--brand-ink); background: color-mix(in srgb, var(--brand) 6%, white); }
+  .dock { display: none; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  @media (max-width: 1023px) {
+    .hero .wrap { grid-template-columns: 1fr 300px; gap: 32px; }
+    .hero h1 { font-size: 56px; }
+    .sec .wrap { grid-template-columns: 1fr; gap: 32px; }
+    .sec__head { position: static; }
+    .cols { grid-template-columns: 1fr 1fr; }
+    .grid { --gap: 24px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid .card:nth-child(4) { display: none; }
+  }
+  @media (max-width: 767px) {
+    .subnav .wrap { gap: 8px; }
+    .subnav a { min-width: 0; padding: 0 16px; font-size: 14px; }
+    .bar nav, .bar .btn { display: none; }
+    .hero .wrap { grid-template-columns: 1fr; gap: 0; padding-bottom: 40px; text-align: center; }
+    .portrait { grid-row: auto; grid-column: auto; order: -1; width: 220px; margin: 0 auto 16px; transform: none; }
+    .back { order: -2; margin-bottom: 8px; }
+    .back { justify-self: start; }
+    .hero__fields, .hero__cta { justify-content: center; }
+    .hero h1 { font-size: 44px; }
+    .hero h1 small { display: block; margin: 6px 0 0; font-size: 16px; }
+    .hero__roles { justify-content: center; margin: 20px 0 28px; }
+    .hero__roles::before { display: none; }
+    .hero__cta .btn--white { display: none; } /* 改用底部固定按鈕 */
+    .stats { margin-top: 28px; padding-top: 20px; text-align: center; }
+    [data-stats="card"] .stats { padding: 20px 6px; margin-bottom: -48px; border-radius: 22px; }
+    [data-stats="card"] .stat span { font-size: 11px; letter-spacing: -.02em; }
+    [data-stats="card"] .subnav .wrap { padding-top: 64px; }
+    .stat { padding: 0 4px; }
+    .stat b { font-size: 30px; }
+    .stat span { font-size: 12px; }
+    .sec { padding: 56px 0; }
+    .sec__head h2 { font-size: 24px; }
+    .svc { padding: 24px; border-radius: 24px; }
+    .dots { grid-template-columns: 1fr; }
+    .skillcols--flat .dots { grid-template-columns: 1fr; }
+    .svc.is-collapsed .dots li:nth-child(n+4) { display: none; }
+    .svc__more { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 8px; padding: 0; border: 0; background: none;
+      font: inherit; font-size: 15px; font-weight: 600; color: var(--brand-ink); cursor: pointer; }
+    /* 手機：名字先出現，領域標籤移到介紹文字下方 */
+    .hero__text { display: flex; flex-direction: column; }
+    .hero__fields { order: 1; margin-bottom: 24px; }
+    .hero__invite { order: 1; margin-top: 0; }
+    .hero__cta { order: 2; }
+    .stats__cap { margin-bottom: 12px; font-size: 13px; }
+    .midcta { border-radius: 24px; padding: 20px 24px; justify-content: center; text-align: center; }
+    .midcta .btn { display: none; }
+    .cols { grid-template-columns: 1fr; }
+    .cta .wrap { padding-top: 48px; padding-bottom: 48px; text-align: center; justify-content: center; }
+    .cta h2 { font-size: 22px; }
+    .more { padding: 56px 0 120px; }
+    .grid { --gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid .card:nth-child(4) { display: grid; }
+    .grid .card { padding-bottom: 40px; }
+    .photo__name { font-size: 20px; }
+    .photo__initial { font-size: 80px; }
+    .exp, .quote { font-size: 13px; }
+    .quote { padding: 12px 10px; }
+    .more .head h2 { font-size: 26px; }
+    .more .head__top { gap: 16px; }
+    .dock { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid var(--line); }
+    .dock .btn { width: 100%; }
+  }
+  /* ---- 通用版補充 ---- */
+  .hero__role { display: flex; align-items: center; gap: 14px; margin-top: 18px; font-size: 18px; font-weight: 500; }
+  .hero__role::before { content: ""; width: 40px; height: 1px; background: rgba(255,255,255,.6); flex: none; } /* 細線帶到職務 */
+  /* 職務前綴樣式比較 */
+  [data-role="none"] .hero__role::before { display: none; }
+  [data-role="dot"] .hero__role::before { width: 8px; height: 8px; border-radius: 50%; background: var(--accent, #fff); }
+  [data-role="dot"] .hero__role { gap: 10px; }
+  [data-role="pill"] .hero__role::before { display: none; }
+  [data-role="pill"] .hero__role { display: inline-flex; padding: 6px 18px; border-radius: 999px; background: rgba(255,255,255,.14); font-size: 16px; }
+  [data-role="bar"] .hero__role::before { width: 3px; height: 1.2em; border-radius: 2px; background: #fff; }
+  [data-role="bar"] .hero__role { gap: 12px; }
+  [data-role="label"] .hero__role::before { content: "現任"; width: auto; height: auto; background: none; padding: 2px 10px; border: 1px solid rgba(255,255,255,.5); border-radius: 999px; font-size: 13px; font-weight: 500; }
+  [data-role="label"] .hero__role { gap: 10px; }
+  .hero__tagline { font-size: 16px; color: rgba(255,255,255,.78); margin: 14px 0 32px; max-width: 34em; }
+  .hero__roles { margin-top: 20px; }
+  /* 沒有中間段落時，邀請區改淺色，避免跟藍色主視覺黏成一大塊 */
+  .cta--light { background: #fff; color: var(--ink); }
+  .cta--light .wrap { border-bottom: 1px solid var(--line); }
+  .cta--light p { color: var(--muted); opacity: 1; }
+  @media (max-width: 767px) { .cta .btn { display: none; } } /* 手機已有底部固定預約鈕，不重複 */
+  @media (max-width: 767px) { .cta--light .wrap { padding-bottom: 40px; } }
+  .cols--1 { grid-template-columns: minmax(0, 520px); }
+  .cols--2 { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 767px) { .hero__role { justify-content: center; font-size: 16px; } .hero__role::before { display: none; } .hero__tagline { font-size: 15px; margin-inline: auto; } .cols--2 { grid-template-columns: 1fr; } }
+
+  /* ===== 淺色主視覺（跟總覽頁同一套淡主色底，從列表點進來不會突然變重）===== */
+  [data-tone="light"] .hero { color: var(--ink); background: color-mix(in srgb, var(--brand) 5%, #f5f6f8); }
+  [data-tone="light"] .back { color: var(--muted); }
+  [data-tone="light"] .back:hover { color: var(--brand-ink); }
+  [data-tone="light"] .hero__fields li { border-color: color-mix(in srgb, var(--brand-ink) 35%, transparent); color: var(--brand-ink); background: #fff; }
+  [data-tone="light"] .hero h1 small { color: var(--muted); opacity: 1; }
+  [data-tone="light"] .hero__role { color: var(--brand-ink); }
+  [data-tone="light"] .hero__tagline { color: var(--body); }
+  [data-tone="light"] .hero .btn--white { background: var(--brand-ink); color: #fff; }
+  [data-tone="light"] .hero .btn--white:hover { background: color-mix(in srgb, var(--brand-ink) 85%, black); }
+  [data-tone="light"] .hero .btn--line { border-color: color-mix(in srgb, var(--brand-ink) 45%, transparent); color: var(--brand-ink); background: #fff; }
+  [data-tone="light"] .hero .btn--line:hover { border-color: var(--brand-ink); background: color-mix(in srgb, var(--brand) 6%, white); }
+  [data-tone="light"] [data-deco="dots"] .hero__deco, [data-tone="light"] .hero[data-deco="dots"] .hero__deco { background-image: radial-gradient(color-mix(in srgb, var(--brand) 22%, transparent) 1.5px, transparent 1.7px); }
+  /* 照片圓形：跟總覽卡片一樣，主色由淡到深 */
+  [data-tone="light"] .portrait__bg { background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 22%, transparent) 0%, color-mix(in srgb, var(--brand) 70%, transparent) 50%, var(--brand) 100%) !important; }
+  [data-tone="light"] .stats { border-top-color: color-mix(in srgb, var(--brand-ink) 18%, transparent); }
+  [data-tone="light"] .stat + .stat { border-left-color: color-mix(in srgb, var(--brand-ink) 18%, transparent); }
+  [data-tone="light"] .stat b { color: var(--brand-ink); }
+  [data-tone="light"] .stat span, [data-tone="light"] .stats__cap { color: var(--muted); }
+  /* 淺色主視覺下面接白底，第一個灰底段落改白，避免兩塊淡色連在一起 */
+  /* 選單列歸屬主視覺：平常跟主視覺同底色（像主視覺的最後一排），下面的白色段落分界清楚；
+     黏在頂部時才變白底＋淡陰影，浮在內容上 */
+  [data-tone="light"] .subnav { background: var(--soft); border-bottom: 1px solid color-mix(in srgb, var(--brand-ink) 12%, transparent); transition: background .25s, box-shadow .25s, border-color .25s; }
+  [data-tone="light"] .subnav.is-stuck { background: #fff; border-bottom-color: var(--line); box-shadow: 0 4px 16px rgba(17,24,39,.06); }
+  /* 數據 B 三個框：白底圓角框各自獨立，不用分隔線；在淡底上自成一組，跟下方分頁標籤分得開 */
+  [data-statbox="box"] .stats { gap: 20px; border-top: 0; padding-top: 0; }
+  /* 總標當成這組數字的小標：字放大加粗、顏色加深、貼近下方的框 */
+  [data-statbox="box"] .stats__cap { margin-bottom: 12px; font-size: 17px; font-weight: 600; letter-spacing: .08em; color: var(--body); }
+  [data-statbox="box"] .stat { padding: 26px 16px 22px; border-radius: 20px; background: #fff;
+    border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent); box-shadow: 0 1px 3px rgba(17,24,39,.04); }
+  [data-statbox="box"] .stat + .stat { border-left: 1px solid color-mix(in srgb, var(--brand) 10%, transparent); }
+  @media (max-width: 767px) { [data-statbox="box"] .stats__cap { margin-bottom: 10px; font-size: 15px; } [data-statbox="box"] .stats { gap: 8px; } [data-statbox="box"] .stat { padding: 16px 4px 14px; border-radius: 16px; } }
+  /* 選單跟上方數值隔開：上緣一條橫貫全寬的細線 */
+  [data-tone="light"] .subnav { border-top: 1px solid color-mix(in srgb, var(--brand-ink) 12%, transparent); }
+  /* A 分頁標籤（預設）：文字＋選中底線，看得出是導覽、不會跟數值搶 */
+  [data-nav="tabs"] .subnav .wrap { gap: 44px; padding-top: 0; padding-bottom: 0; }
+  [data-nav="tabs"] .subnav a { position: relative; min-width: 0; min-height: 60px; padding: 0 2px; border: 0; border-radius: 0; background: none !important;
+    font-size: 16px; color: var(--body); }
+  [data-nav="tabs"] .subnav a::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--brand-ink);
+    transform: scaleX(0); transition: transform .25s cubic-bezier(.33,1,.68,1); }
+  [data-nav="tabs"] .subnav a:hover { color: var(--brand-ink); }
+  [data-nav="tabs"] .subnav a[aria-current="true"] { color: var(--brand-ink); font-weight: 700; }
+  [data-nav="tabs"] .subnav a[aria-current="true"]::after { transform: none; }
+  /* B 膠囊：維持原樣，上下多留空間 */
+  [data-nav="pill"] .subnav .wrap { padding-top: 14px; padding-bottom: 14px; }
+  @media (max-width: 767px) { [data-nav="tabs"] .subnav .wrap { gap: 28px; } [data-nav="tabs"] .subnav a { min-height: 52px; font-size: 15px; } }
+  @media (prefers-reduced-motion: reduce) { [data-nav="tabs"] .subnav a::after { transition: none; } }
+  [data-tone="light"] .sec--soft { background: #fff; }
+  [data-tone="light"] .sec--soft::before { display: none; }
+  [data-tone="light"] .sec:not(.sec--soft) { position: relative; overflow: clip; background: var(--soft); }
+  [data-tone="light"] .sec:not(.sec--soft)::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(color-mix(in srgb, var(--brand) 22%, transparent) 1.5px, transparent 1.7px); background-size: 22px 22px;
+    -webkit-mask: radial-gradient(ellipse 38% 70% at 100% 0%, #000 15%, transparent 75%), radial-gradient(ellipse 28% 55% at 0% 100%, #000 10%, transparent 72%);
+            mask: radial-gradient(ellipse 38% 70% at 100% 0%, #000 15%, transparent 75%), radial-gradient(ellipse 28% 55% at 0% 100%, #000 10%, transparent 72%); }
+  [data-tone="light"] .sec:not(.sec--soft) .wrap { position: relative; }
+  [data-tone="light"] .sec:not(.sec--soft) .skills .pill { background: #fff; }
+  [data-tone="light"] .sec--soft .midcta { background: var(--soft); border: 0; }
+  /* 圓形底比人像遮罩內縮 1.5px：避免底色從人物邊緣露出一圈細線，看起來像沒對齊 */
+  .portrait__bg { inset: calc(20% + 1.5px) 1.5px 1.5px 1.5px !important; }
+  /* 遮罩放在外層、圖片在裡面放大：肩膀撐滿圓形左右，圓的下半部不會左右露出不一樣多的底色 */
+  .portrait__person { position: absolute; inset: -20% 0 0 0; /* 往上多留 20%，放大後頭髮不會被切到 */
+    -webkit-mask: linear-gradient(#000 0 0) top / 100% 66.667% no-repeat, radial-gradient(ellipse 50% 33.333% at 50% 66.667%, #000 calc(100% - .5px), transparent 100%);
+            mask: linear-gradient(#000 0 0) top / 100% 66.667% no-repeat, radial-gradient(ellipse 50% 33.333% at 50% 66.667%, #000 calc(100% - .5px), transparent 100%); }
+  .portrait__person img { position: absolute; left: 0; right: 0; bottom: 0; top: auto; height: 83.333%; -webkit-mask: none !important; mask: none !important; transform: scale(var(--fill, 1.1)); transform-origin: 50% 100%; }
+</style>
+</head>
+<body data-tone="light" data-nav="tabs" data-statbox="box">
+
+<div class="toolbar" role="group" aria-label="預覽設定">
+  預覽用・切換主色：
+  <button style="background:#004896" data-c="#004896" data-ink="#004896" data-deep="#004896" data-accent="#3BB3F0" aria-label="藍" aria-pressed="true"></button>
+  <button style="background:#C32467" data-c="#C32467" data-ink="#C32467" data-deep="#C32467" data-accent="#FF9A8B" aria-label="桃紅"></button>
+  <button style="background:#E58332" data-c="#E58332" data-ink="#A9561A" data-deep="#BF5F14" data-accent="#FFC24B" aria-label="橘"></button>
+  <span style="margin-left:16px">主視覺：</span>
+  <a href="#" data-tv="light" aria-current="true">淺色</a><a href="#" data-tv="dark">深色</a>
+  <span style="margin-left:16px">數據：</span>
+  <a href="#" data-sb="line">A 分隔線</a><a href="#" data-sb="box" aria-current="true">B 三個框</a>
+  <span style="margin-left:16px">選單：</span>
+  <a href="#" data-nv="tabs" aria-current="true">A 分頁標籤</a><a href="#" data-nv="pill">B 膠囊</a>
+  <span style="margin-left:16px">示範老師：</span>
+  <a href="detail-v4.html?id=weng" data-id="weng">翁瑞鋒（資料少）</a><a href="detail-v4.html?id=huang" data-id="huang">黃鴻順（資料多）</a>
+</div>
+
+<!-- 頁首（logo／主選單）由各站自己的佈景主題提供，不屬於本元件 -->
+<main id="app"></main>
+<div class="dock"><a class="btn btn--primary" href="#contact">預約諮詢 <span class="arrow" aria-hidden="true">→</span></a></div>
+
+<script src="people.js"></script>
+<script>
+/* ============ 資料：每位老師一筆。除了「固定」欄位，其他欄位沒有就不填 ============ */
+const DETAILS = {
+  huang: {
+    name: '黃鴻順', title: '博士', img: 'huang',                       // 固定
+    tagline: '知識管理的領航者 — 致力協助企業家、經理人提升企業競爭力。',   // 固定
+    fields: ['經營管理','行銷管理','業務管理','專案管理','人力資源','資訊管理','研發管理'], // 固定
+    roles: ['習慣領域集團 執行長','習慣領域公司 總經理','國立陽明交通大學 EMBA 教師','習慣領域學會第十屆 副理事長','龍益智動化股份有限公司 總經理','眾多企業經營管理 顧問、教師'], // 固定
+    mainRole: 0,                                                         // 選填：主視覺放哪一個職務（沒填就放第 1 個）
+    statsCaption: '累積授課與輔導',                                       // 選填：數據的總標，下面只寫單位
+    stats: [['1,200+','場次'],['5,200+','小時'],['33,000+','人次']],
+    services: [
+      { name: '企業諮詢、輔導', items: ['高效會議與關鍵指標','企業核心流程與商業智慧','人才管理的策略與執行','企業文化的塑造與落實','高效成長策略的規劃與執行','高績效企業的經營與管理','平衡計分卡的規劃與執行','資訊管理系統的建置與營運'] },
+      { name: '企業課程', items: [['經營層','領導與經營管理系列（16 主題）'],['主管層','主管管理技能系列（18 主題）'],['執行層','個人共通智能系列（16 主題）'],['陽明交大 EMBA','習慣領域與創新決策（新竹）、高績效的經營管理（台中）']] },
+      { name: '雲端資訊系統建置與營運', items: [['高效行銷','社群經營、網頁／網站／商城建置與營運、LINE 多頁宣傳、GA4 數據分析、行銷儀表板'],['高效搶單','客戶關係、專案管理、線上目錄、估價與報價、合約管理、搶單儀表板'],['高效行單','訂單管理、流程管理、看板管理、站點與媒合管理、售後服務、資訊串接'],['高效管理','目標管理、高效會議、勤務打卡、簽核、巡檢保養請修、各類表單與管理儀表板']] },
+    ],
+    skills: ['習慣領域學理與應用','高績效的經營管理','習慣領域與創新決策','目標管理','企業創新與轉型','AI 與資訊系統','優良企業文化的塑造與落實','人才發展','企業的七個習慣力','創新動態學','贏贏策略','系統性思考','概念性思考'],
+    // 選填：專長分組（示範用的分法，需老師確認）。沒填就用上面的 skills 不分組條列
+    skillGroups: [
+      { name: '思維與決策', items: ['習慣領域學理與應用','習慣領域與創新決策','創新動態學','系統性思考','概念性思考'] },
+      { name: '經營與策略', items: ['高績效的經營管理','企業創新與轉型','贏贏策略','目標管理','AI 與資訊系統'] },
+      { name: '組織與人才', items: ['優良企業文化的塑造與落實','人才發展','企業的七個習慣力'] },
+    ],
+    education: ['國立陽明交通大學<br>資訊管理研究所 博士','國立陽明交通大學<br>經營管理研究所 碩士'],
+    links: [['個人網站','ken.hdhd.co','http://ken.hdhd.co'],['經營管理專欄','ipedia.tw/author/kantian','https://ipedia.tw/author/kantian/']],
+  },
+  weng: {
+    name: '翁瑞鋒', title: '老師', img: 'weng-rui-feng',
+    tagline: '科技藝術、人工智慧、體驗設計',
+    fields: ['資訊管理','研發管理'],
+    roles: ['卡米爾公司 研發總監'],
+  },
+};
+
+/* ============ 版型規則 ============ */
+const id = new URLSearchParams(location.search).get('id') || 'weng';
+const D = DETAILS[id];
+const full = D.name + D.title;
+const mainRole = D.roles[D.mainRole || 0];   // 主視覺只放 1 個代表職務，完整清單在「經歷」段
+const has = { stats: D.stats?.length, services: D.services?.length, skills: D.skills?.length >= 4,
+  // 經歷段：職務超過主視覺放得下的 3 項，或有學歷／經歷認證／連結時才出現（否則主視覺已經講完了）
+  roles: D.roles.length > 1 || D.education?.length || D.certs?.length || D.links?.length };
+
+const HERO_FIELDS = 3;   // 主視覺最多放幾個領域；更多的完整列在「專長」段
+const dots = items => `<ul class="dots">${items.map(x => Array.isArray(x) ? `<li><b>${x[0]}</b>${x[1]}</li>` : `<li>${x}</li>`).join('')}</ul>`;
+const SECTIONS = [
+  has.services && { id: 'services', nav: '可提供的服務', label: 'SERVICES', h: '可提供的服務', body: `
+      <div class="services">
+        ${D.services.map(g => `<article class="svc"><h3>${g.name}</h3>${dots(g.items)}</article>`).join('')}
+        <aside class="midcta" aria-label="預約諮詢"><p><b>對以上服務有興趣？</b>先聊聊您的需求。</p>
+          <a class="btn btn--primary" href="#contact">預約諮詢 <span class="arrow" aria-hidden="true">→</span></a></aside>
+      </div>` },
+  has.skills && { id: 'skills', nav: '專長', label: 'EXPERTISE', h: '專長', body: `
+      ${D.fields.length > HERO_FIELDS ? `<p class="sub">專業領域</p><ul class="skills skills--field">${D.fields.map(f => `<li class="pill">${f}</li>`).join('')}</ul>` : ''}
+      ${D.skillGroups?.length
+        ? `<div class="skillcols">${D.skillGroups.map(g => `<div><h3>${g.name}</h3>${dots(g.items).replace('class="dots"', 'class="dots dots--one"')}</div>`).join('')}</div>`
+        : `<div class="skillcols skillcols--flat">${dots(D.skills)}</div>`}` },
+  has.roles && (() => {
+    const cols = [['現任職務', D.roles], ['學歷', D.education], ['經歷與認證', D.certs]].filter(c => c[1]?.length)
+      .map(([h, l]) => `<div class="col"><h3>${h}</h3><ul>${l.map(x => `<li>${x}</li>`).join('')}</ul></div>`);
+    if (D.links?.length) cols.push(`<div class="col"><h3>更多資訊</h3><ul>${D.links.map(([t, sub, url]) =>
+      `<li><a href="${url}" target="_blank" rel="noopener noreferrer"><span>${t}<small>${sub}</small></span><span aria-hidden="true">↗</span><span class="sr-only">（另開新分頁）</span></a></li>`).join('')}</ul></div>`);
+    return { id: 'roles', nav: D.education?.length ? '經歷與學歷' : '經歷', label: 'PROFILE', h: D.education?.length ? '經歷與學歷' : '經歷',
+      body: `<div class="cols cols--${Math.min(cols.length, 3)}">${cols.join('')}</div>` };
+  })(),
+].filter(Boolean);
+
+const second = SECTIONS[0] ? `<a class="btn btn--line" href="#${SECTIONS[0].id}">看${SECTIONS[0].nav} <span aria-hidden="true">↓</span></a>` : '';
+document.getElementById('app').innerHTML = `
+  <section class="hero" aria-labelledby="name" data-deco="dots" data-role="none">
+    <span class="hero__deco" aria-hidden="true"></span>
+    <div class="wrap">
+      <a class="back" href="index.html#experts">← 返回專家陣容</a>
+      <div class="hero__text">
+        <ul class="hero__fields" aria-label="主要領域">${D.fields.slice(0, HERO_FIELDS).map(f => `<li>${f}</li>`).join('')}</ul>
+        <h1 id="name">${D.name}<small>${D.title}</small></h1>
+        <p class="hero__role">${mainRole}</p>
+        <p class="hero__tagline">${D.tagline}</p>
+        ${SECTIONS.length ? '' : `<p class="hero__invite" id="contact"><b>想邀請${full}授課、演講或企業輔導？</b>留下需求，我們會盡快與您聯繫安排。</p>`}
+        <div class="hero__cta"><a class="btn btn--white" href="#contact">預約諮詢 <span class="arrow" aria-hidden="true">→</span></a>${second}</div>
+      </div>
+      <div class="portrait">
+        <span class="portrait__bg" aria-hidden="true"></span>
+        ${D.img ? `<span class="portrait__person"><img src="img/${D.img}-cut.webp" alt="${full}的照片"></span>` : `<span class="photo__initial"><span>${D.name[0]}</span></span>`}
+      </div>
+      ${has.stats ? `<div class="stats" aria-label="${D.statsCaption || '累積成果'}">${D.statsCaption ? `<p class="stats__cap">${D.statsCaption}</p>` : ''}${D.stats.map(([n, t]) => `<div class="stat"><b>${n}</b><span>${t}</span></div>`).join('')}</div>` : ''}
+    </div>
+  </section>
+  ${SECTIONS.length >= 3 ? `<nav class="subnav" aria-label="本頁內容"><div class="wrap" id="subnav">${SECTIONS.map(x => `<a href="#${x.id}">${x.nav}</a>`).join('')}</div></nav>` : ''}
+  ${SECTIONS.map((x, i) => `
+  <section class="sec ${i % 2 === 0 ? 'sec--soft' : ''}" id="${x.id}" aria-labelledby="h-${x.id}">
+    <div class="wrap">
+      <header class="sec__head"><p class="label">${x.label}</p><h2 id="h-${x.id}">${x.h}</h2></header>
+      <div>${x.body}</div>
+    </div>
+  </section>`).join('')}
+  ${SECTIONS.length ? `<section class="cta" id="contact" aria-labelledby="h-cta">
+    <div class="wrap">
+      <div><h2 id="h-cta">想邀請${full}授課、演講或企業輔導？</h2><p>留下需求，我們會盡快與您聯繫安排。</p></div>
+      <a class="btn btn--white" href="#contact">預約諮詢 <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+  </section>` : ''}
+  <section class="more ${SECTIONS.length ? '' : 'more--white'}" aria-labelledby="h-more">
+    <div class="wrap">
+      <header class="head"><div class="head__top"><h2 id="h-more"><span class="hl">相關領域</span>專家</h2><span class="head__line" aria-hidden="true"></span></div><p class="head__sub">與${full}專業領域相近的專家，點頭像看完整經歷。</p></header>
+      <div class="grid" id="others"></div>
+      <div class="more__all"><a class="btn btn--primary" href="index.html#experts">查看全部專家 <span class="arrow" aria-hidden="true">→</span></a></div>
+    </div>
+  </section>`;
+document.querySelectorAll('[data-tv]').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault(); document.body.dataset.tone = a.dataset.tv;
+  document.querySelectorAll('[data-tv]').forEach(x => x.toggleAttribute('aria-current', x === a));
+}));
+document.querySelectorAll('[data-sb]').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault(); document.body.dataset.statbox = a.dataset.sb;
+  document.querySelectorAll('[data-sb]').forEach(x => x.toggleAttribute('aria-current', x === a));
+}));
+document.querySelectorAll('[data-nv]').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault(); document.body.dataset.nav = a.dataset.nv;
+  document.querySelectorAll('[data-nv]').forEach(x => x.toggleAttribute('aria-current', x === a));
+}));
+document.title = `${full}｜專家詳情頁通用版預覽`;
+
+// 服務清單超過 3 項：手機版先收合（電腦版按鈕隱藏、全部顯示）
+document.querySelectorAll('.svc').forEach((svc, i) => {
+  const n = svc.querySelectorAll('.dots li').length;
+  if (n <= 3) return;
+  const ul = svc.querySelector('.dots'); ul.id = `svc-list-${i}`;
+  svc.classList.add('is-collapsed');
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'svc__more'; btn.setAttribute('aria-controls', ul.id); btn.setAttribute('aria-expanded', 'false');
+  const label = () => { const open = !svc.classList.contains('is-collapsed');
+    btn.innerHTML = open ? '收合 <span aria-hidden="true">▴</span>' : `展開全部 ${n} 項 <span aria-hidden="true">▾</span>`; btn.setAttribute('aria-expanded', open); };
+  btn.addEventListener('click', () => { svc.classList.toggle('is-collapsed'); label(); });
+  label(); svc.append(btn);
+});
+document.querySelectorAll('[data-id]').forEach(a => a.toggleAttribute('aria-current', a.dataset.id === id));
+
+// 相關領域專家：領域重疊最多的排前面，取 4 位
+const ME = window.PEOPLE.find(p => p.zh === D.name);
+const overlap = p => p.fields.filter(f => D.fields.includes(f)).length;
+const others = window.PEOPLE.filter(p => p !== ME).map((p, i) => ({ p, n: overlap(p), i }))
+  .sort((a, b) => b.n - a.n || a.i - b.i).slice(0, 4).map(x => x.p);
+document.getElementById('others').innerHTML = others.map(p => `
+  <article class="card">
+    <h3 class="sr-only">${p.zh}</h3>
+    <a class="photo" href="${p.url}" target="_blank" rel="noopener noreferrer" aria-label="查看完整經歷：${p.zh}（另開新分頁）">
+      <span class="photo__bg" aria-hidden="true"></span>
+      <span class="photo__hover" aria-hidden="true">查看完整經歷 <span class="arrow">→</span></span>
+      ${p.img ? `<span class="photo__person"><img src="img/${p.img}-cut.webp" alt=""></span>` : `<span class="photo__initial" aria-hidden="true"><span>${p.zh[0]}</span></span>`}
+      <span class="photo__name">${p.zh}</span>
+    </a>
+    <ul class="exp">${p.exp.slice(0, 2).map(e => `<li>${e}</li>`).join('')}</ul>
+    <ul class="tags">${p.tags.slice(0, 3).map(t => `<li>${t}</li>`).join('')}</ul>
+    <div class="quote-wrap"><blockquote class="quote">${p.quote ? `<p>${p.quote}</p>` : ''}</blockquote></div>
+    <div class="card__more"><a href="${p.url}" target="_blank" rel="noopener noreferrer" tabindex="-1" aria-label="查看完整經歷：${p.zh}（另開新分頁）">查看完整經歷 <span class="arrow">→</span></a></div>
+  </article>`).join('');
+
+/* ===== 動態效果（不載入額外工具；系統關閉動態時全部略過）=====
+   #86  逐行揭示：主視覺的領域、名字、職務、介紹、按鈕，一行行從下方滑上來
+   #115 照片揭示：照片由下往上揭開，同時從稍大縮回原尺寸
+   #155 數字計數：數據捲進畫面時才從 0 累加到目標值
+   #125 柔和上浮：每個段落捲到時，標題與內容依序浮現 */
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const EASE = 'cubic-bezier(.33,1,.68,1)';
+  // 主視覺（文字、照片）一開始就顯示，不做進場動畫
+  // 數字計數：先把最終寬度鎖住，跑數字時版面不會跳動
+  const nums = [...document.querySelectorAll('.stat b')];
+  nums.forEach(b => { b.dataset.final = b.textContent; b.style.minWidth = b.getBoundingClientRect().width + 'px'; b.style.display = 'inline-block'; b.textContent = '0'; });
+  const count = b => { const m = b.dataset.final.match(/^([\d,]+)(.*)$/); if (!m) { b.textContent = b.dataset.final; return; }
+    const to = +m[1].replace(/,/g, ''), t0 = performance.now(), dur = 1600;
+    const tick = t => { const k = Math.min(1, (t - t0) / dur), v = Math.round(to * (1 - Math.pow(1 - k, 3)));
+      b.textContent = v.toLocaleString('en-US') + (k === 1 ? m[2] : ''); if (k < 1) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick); };
+  const ioNum = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { count(e.target); ioNum.unobserve(e.target); } }), { threshold: .6 });
+  nums.forEach(b => ioNum.observe(b));
+  // 段落柔和上浮
+  const groups = [...document.querySelectorAll('.sec .wrap, .cta .wrap, .more .wrap')];
+  // 每段要依序浮現的東西：標題 → 服務卡片／經歷欄位一張張 → 其他內容
+  const kids = g => { const head = g.querySelector(':scope > .sec__head, :scope > .head'), list = g.querySelector('.services, .cols, .grid');
+    if (list) return [head, ...list.children, ...[...g.children].filter(x => x !== head && x !== list && !x.contains(list))].filter(Boolean);
+    return head ? [head, ...[...g.children].filter(x => x !== head)] : [...g.children]; };
+  groups.forEach(g => kids(g).forEach(el => el.style.opacity = 0));
+  const ioSec = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; ioSec.unobserve(e.target);
+    kids(e.target).forEach((el, i) => { el.style.opacity = '';
+      el.animate([{ opacity: 0, transform: 'translateY(24px)', filter: 'blur(6px)' }, { opacity: 1, transform: 'none', filter: 'blur(0)' }], { duration: 560, delay: i * 90, easing: EASE, fill: 'backwards' }); });
+  }), { threshold: .15 });
+  groups.forEach(g => ioSec.observe(g));
+}
+
+// 頁內導覽 scrollspy
+const bar = document.getElementById('subnav');
+if (bar) {
+  const links = [...bar.querySelectorAll('a')];
+  // 選單黏到頂部時加上 is-stuck（換白底＋陰影）
+  const nav = bar.closest('.subnav');
+  const stuck = () => nav.classList.toggle('is-stuck', nav.getBoundingClientRect().top <= 0 && scrollY > 0);
+  addEventListener('scroll', stuck, { passive: true }); stuck();
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    // 捲回主視覺時清掉選取狀態，不會一直亮著上次看到的段落
+    if (e.target.classList.contains('hero')) { links.forEach(a => a.setAttribute('aria-current', 'false')); return; }
+    links.forEach(a => a.setAttribute('aria-current', a.hash === '#' + e.target.id));
+    const cur = links.find(a => a.hash === '#' + e.target.id);
+    if (cur && bar.scrollWidth > bar.clientWidth) bar.scrollTo({ left: cur.offsetLeft - (bar.clientWidth - cur.offsetWidth) / 2, behavior: 'smooth' });
+  }), { rootMargin: '-40% 0px -55% 0px' });
+  SECTIONS.forEach(x => io.observe(document.getElementById(x.id)));
+  io.observe(document.querySelector('.hero'));
+}
+document.documentElement.style.scrollBehavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+document.querySelectorAll('.toolbar button').forEach(b => b.addEventListener('click', () => {
+  const r = document.documentElement.style;
+  r.setProperty('--brand', b.dataset.c); r.setProperty('--brand-ink', b.dataset.ink);
+  r.setProperty('--brand-deep', b.dataset.deep); r.setProperty('--accent', b.dataset.accent);
+  document.querySelectorAll('.toolbar button').forEach(x => x.setAttribute('aria-pressed', x === b));
+}));
+</script>
+</body>
+</html>

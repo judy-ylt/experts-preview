@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>專家陣容預覽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #004896;        /* 各站主色 */
+    --brand-ink: #004896;    /* 主色當文字用：淺色主色要換深一階才夠對比 */
+    --brand-deep: #004896;
+    --accent: #3BB3F0;       /* 相近的亮色（品牌 icon 的漸層副色） */   /* 名字底下的漸層：白字要清楚，但不混黑以免發灰 */
+    --ink: #111827;
+    --body: #374151;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --bg: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: "Noto Sans TC", system-ui, sans-serif; }
+
+  /* ---- 預覽工具列（不屬於元件） ---- */
+  .toolbar { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding: 10px 16px; background: #f9fafb; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+  .toolbar button { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer; }
+  .toolbar button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+  .toolbar .seg { display: inline-flex; gap: 4px; }
+  .toolbar .seg button { width: auto; height: 32px; border-radius: 999px; padding: 0 14px; background: #fff; color: var(--body); font: inherit; font-size: 13px; }
+  .toolbar .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; box-shadow: none; }
+
+  /* ---- 區塊 ---- */
+  /* 整個區塊當成一個畫面：淡主色底＋點陣（同詳情頁），超大英文標題靠左＋橫貫細線 */
+  .people { position: relative; padding: 72px 16px 120px; overflow: clip; background: color-mix(in srgb, var(--brand) 5%, #f5f6f8); }
+  .people::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(color-mix(in srgb, var(--brand) 22%, transparent) 1.5px, transparent 1.7px); background-size: 22px 22px;
+    -webkit-mask: radial-gradient(ellipse 34% 45% at 100% 0%, #000 15%, transparent 75%), radial-gradient(ellipse 30% 40% at 0% 100%, #000 10%, transparent 72%);
+            mask: radial-gradient(ellipse 34% 45% at 100% 0%, #000 15%, transparent 75%), radial-gradient(ellipse 30% 40% at 0% 100%, #000 10%, transparent 72%); }
+  .people__top { display: flex; align-items: center; gap: 28px; }
+  .people__big { font-family: "Barlow Semi Condensed", sans-serif; font-weight: 700; font-size: 128px; line-height: .82; letter-spacing: .01em; color: var(--brand-ink); }
+  /* 標題關鍵字：只改成文字色（主色深一階），不加底色 */
+  .hl { color: var(--brand-ink); }
+  .people__line { flex: 1; height: 1px; background: color-mix(in srgb, var(--brand-ink) 35%, transparent); }
+  .people::before { display: none; /* 拿掉參考圖 1 的背景大色塊 */
+    content: ""; position: absolute; left: 0; top: 200px; width: 78%; height: 62%;
+    background: color-mix(in srgb, var(--brand) 8%, white);
+  }
+  .people__inner { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; }
+  .people__head { text-align: left; margin-bottom: 32px; }
+  .people__label { font-family: "Barlow Semi Condensed", sans-serif; font-weight: 600; font-size: 14px; letter-spacing: .3em; color: var(--brand-ink); }
+  .people__title { flex: none; font-size: 40px; font-weight: 700; line-height: 1.3; letter-spacing: .06em; color: var(--ink); }
+  .people__sub { font-size: 16px; color: var(--muted); margin-top: 10px; }
+
+  .grid { --gap: 28px; --row-gap: 64px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 var(--gap); }
+  /* 卡片之間的上下距離放在卡片底部；放在 gap 會連卡片內部的每一層都被撐開 */
+  .grid > .card { padding-bottom: var(--row-gap); }
+
+  /* ---- 卡片 ---- */
+  .card { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-row: span 5; grid-template-rows: subgrid; row-gap: 0; }
+  .photo { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: var(--photo-bg, transparent); }
+  /* 主色背景層：照片去背後，背景顏色由各站主色決定 */
+  .photo__bg { position: absolute; inset: 0;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 22%, transparent) 0%, color-mix(in srgb, var(--brand) 70%, transparent) 50%, var(--brand) 100%); }
+  .photo img { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+  .photo::after { /* 只在最底部 28% 加深，讓名字清楚但不碰到臉 */
+    content: ""; position: absolute; z-index: 3; inset: 72% 0 0 0;
+    background: linear-gradient(to top, var(--brand-deep) 0%, color-mix(in oklch, var(--brand-deep) 60%, transparent) 45%, transparent 100%); }
+  .photo__name { position: absolute; z-index: 4; left: 10%; right: 10%; bottom: 7%; color: #fff;
+    font-size: 26px; font-weight: 700; line-height: 1.2; letter-spacing: .12em; }
+  .photo__initial { position: absolute; z-index: 1; inset: 10% 0 25% 0; display: grid; place-items: center;
+    font-size: 110px; font-weight: 700; color: #fff; opacity: .55; }
+
+  /* 無限符號：一條細線繞過頭部後方，交叉點被人物擋住，產生前後層次 */
+  /* 無限符號：每張卡片一個環，跟隔壁卡片的環在間隙交叉，整排連成 ∞∞∞（老師彼此連結）
+     環在人物後方，被頭部擋住，產生前後層次 */
+  .photo { overflow: visible; }
+  .photo__inf { position: absolute; z-index: 1; pointer-events: none; border-radius: 50%;
+    left: calc(var(--gap) / -2 - 8px); right: calc(var(--gap) / -2 - 8px); top: 30%; height: 34%;
+    /* 有寬度的半透明漸層彩帶（品牌規範：不要細線） */
+    background: linear-gradient(100deg, color-mix(in srgb, var(--accent) 80%, transparent), color-mix(in srgb, var(--brand) 85%, transparent) 50%, color-mix(in srgb, var(--accent) 80%, transparent));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 9px), #000 calc(100% - 8px), #000 calc(100% - 1px), transparent);
+            mask: radial-gradient(farthest-side, transparent calc(100% - 9px), #000 calc(100% - 8px), #000 calc(100% - 1px), transparent);
+    opacity: .7; transition: opacity .4s, filter .4s; }
+  .card:hover .photo__inf { opacity: 1; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 70%, transparent)); }
+  body:not(.show-inf) .photo__inf { display: none; }
+  @media (prefers-reduced-motion: reduce) { .card:hover .photo__inf path { animation: none; } }
+  /* 樣式 1：拱門破框——拱形色塊，頭部超出拱門 */
+  [data-style="arch"] .photo__bg { inset: 24% 0 0 0; border-radius: 999px 999px 0 0; }
+  /* 樣式 2：下半色塊——上方淡色、下方主色實塊 */
+  [data-style="split"] { --photo-bg: color-mix(in srgb, var(--brand) 8%, white); }
+  [data-style="split"] .photo__bg { inset: 46% 0 0 0; background: var(--brand); }
+  [data-style="split"] .photo__initial { inset: 46% 0 22% 0; font-size: 72px; }
+  /* 樣式：圓形——圓形色塊，頭和手臂超出圓、下半身裁在圓內 */
+  [data-style="circle"] .photo__bg { inset: 20% 0 0 0; border-radius: 50%;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 22%, transparent) 0%, color-mix(in srgb, var(--brand) 70%, transparent) 50%, var(--brand) 100%); }
+  [data-style="circle"] .photo__person, [data-style="circle"] .photo::after {
+    -webkit-mask: linear-gradient(#000 0 0) top / 100% 60% no-repeat, radial-gradient(circle closest-side at 50% 60%, #000 calc(100% - .5px), transparent 100%);
+            mask: linear-gradient(#000 0 0) top / 100% 60% no-repeat, radial-gradient(circle closest-side at 50% 60%, #000 calc(100% - .5px), transparent 100%); }
+  [data-style="circle"] .photo::after { inset: 0; background: linear-gradient(to top, var(--brand-deep) 0%, transparent 28%); -webkit-mask: radial-gradient(circle closest-side at 50% 60%, #000 calc(100% - .5px), transparent 100%); mask: radial-gradient(circle closest-side at 50% 60%, #000 calc(100% - .5px), transparent 100%); }
+  [data-style="circle"] .photo__name { text-align: center; bottom: 8%; }
+  [data-style="circle"] .photo__initial { inset: 20% 0 0 0; font-size: 96px; line-height: 1; } /* 對齊圓心 */
+  [data-style="circle"] .photo__initial > span { transform: translateY(-.04em); } /* 修正中文字型本身偏下的留白 */
+  /* 圓形是左右對稱的，下方文字改成置中，跟圓心對齊 */
+  [data-style="circle"] .exp, [data-style="circle"] .more { text-align: center; }
+  [data-style="circle"] .tags { justify-content: center; }
+  /* 樣式：拱門＋偏移線框 */
+  [data-style="archline"] .photo__bg { inset: 24% 7% 0 7%; border-radius: 999px 999px 0 0; }
+  [data-style="archline"] .photo__bg::before { content: ""; position: absolute; inset: 0; border-radius: inherit;
+    border: 1.5px solid color-mix(in srgb, var(--brand) 55%, white); transform: translate(-12px, -12px); }
+  [data-style="archline"] .photo::after { left: 7%; right: 7%; }
+  /* 樣式：山丘弧——較平緩的弧頂、滿版寬 */
+  [data-style="dome"] .photo__bg { inset: 26% 0 0 0; border-radius: 50% 50% 0 0 / 26% 26% 0 0; }
+  /* 樣式：葉片——只有左上角大圓弧 */
+  [data-style="leaf"] .photo__bg { inset: 24% 4% 0 4%; border-radius: 85% 0 0 0 / 55% 0 0 0; }
+  [data-style="leaf"] .photo::after { left: 4%; right: 4%; }
+  /* 樣式：圓角方塊 */
+  [data-style="rounded"] .photo__bg { inset: 24% 4% 0 4%; border-radius: 32px 32px 0 0; }
+  [data-style="rounded"] .photo::after { left: 4%; right: 4%; }
+  /* 照片左右裁到跟色塊同寬，肩膀不會露出色塊外 */
+
+  [data-style="leaf"], [data-style="rounded"] { --side: 4%; }
+  [data-style="archline"] { --side: 7%; }
+
+  /* 滑過卡片：人物往上浮、更突出拱門 */
+  /* 人物外層：左右、下方裁齊色塊，上方不裁（保留破框） */
+  .photo__person { position: absolute; z-index: 2; top: 0; bottom: 0; left: var(--side, 0); right: var(--side, 0); clip-path: inset(-40% 0 0 0); }
+  .photo__person img { position: static; width: 100%; height: 100%; object-fit: cover; object-position: center top;
+    transform-origin: center bottom; transition: transform .4s cubic-bezier(.33,1,.68,1); }
+  .photo__bg { transition: filter .4s; }
+  /* 滑過：人物從底部往前放大（底邊不動，不露出裁切線），拱門微亮 */
+  .card:has(a:hover) .photo__person img { transform: scale(1.03); }
+  .card:has(a:hover) .photo__bg { filter: brightness(1.08); }
+  .card:has(a:hover) .more .arrow { transform: translateX(4px); }
+  .card:has(a:hover) .more a { text-decoration: underline; text-underline-offset: 5px; }
+  a.photo { display: block; width: 100%; align-self: start; cursor: pointer; }
+  @media (prefers-reduced-motion: reduce) { .photo img, .more .arrow, .photo__name, .photo__hover, .photo__bg { transition: none !important; } .card:has(a:hover) .photo__person img { transform: none; } }
+  .exp li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .exp { min-width: 0; list-style: none; padding-top: 14px; font-size: 14px; line-height: 1.7; color: var(--body); }
+  .tags { list-style: none; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; padding-top: 12px; }
+  .tags li { font-size: 13px; line-height: 1.5; color: var(--brand-ink); }
+  /* 專長樣式 1：淡色實心小標籤（實心≠按鈕的外框，不會被誤認為能點） */
+  [data-tag="chip"] .tags li { padding: 3px 12px; border-radius: 999px; background: #fff; }
+  /* 專長樣式 2：圓點分隔的純文字 */
+  [data-tag="dot"] .tags { gap: 0 2px; }
+  [data-tag="dot"] .tags li + li::before { content: "·"; margin: 0 6px; color: color-mix(in srgb, var(--brand-ink) 50%, transparent); }
+  /* 專長樣式 3：hashtag */
+  [data-tag="hash"] .tags { gap: 2px 10px; }
+  [data-tag="hash"] .tags li::before { content: "#"; margin-right: 1px; opacity: .6; }
+  .more { align-self: end; padding-top: 16px; }
+  /* 老師的一段話：選填，最多 3 行；沒寫的人位置保留，同排仍對齊 */
+  .quote-wrap { padding-top: 16px; }
+  [data-quote="boxmark"] .quote-wrap { padding-top: 28px; } /* 引號圓章凸出框外，留空間不碰到標籤 */
+  .quote { position: relative; margin: 0; font-size: 14px; line-height: 1.7; color: var(--body); text-align: center; }
+  .quote p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .quote:not(:has(p)) { display: none; } /* 沒寫的老師：不畫框，但這一列高度仍保留，同排對齊 */
+  /* A 淡底框＋引號（推薦） */
+  [data-quote="box"] .quote { padding: 14px 16px; border-radius: 20px; background: #fff; } /* 區塊已有淡底，框改白色才看得出來 */
+  [data-quote="boxmark"] .quote { padding: 22px 16px 14px; border-radius: 20px; background: color-mix(in srgb, var(--brand) 6%, white); }
+  [data-quote="boxmark"] .quote::before { content: "“"; position: absolute; left: 50%; top: -14px; transform: translateX(-50%);
+    width: 30px; height: 30px; border-radius: 50%; background: var(--brand-ink); color: #fff; font: 700 26px/40px Georgia, serif; }
+  /* B 大引號 */
+  [data-quote="mark"] .quote::before { content: "“"; display: block; height: 26px; color: var(--brand); opacity: .5; font: 700 46px/1 Georgia, serif; }
+  /* C 對話框：尖角指向上方的人物 */
+  [data-quote="bubble"] .quote { padding: 14px 16px; border-radius: 18px; border: 1px solid color-mix(in srgb, var(--brand) 25%, transparent); background: #fff; }
+  [data-quote="bubble"] .quote::before { content: ""; position: absolute; left: 50%; top: -7px; width: 12px; height: 12px; background: #fff;
+    border-left: 1px solid color-mix(in srgb, var(--brand) 25%, transparent); border-top: 1px solid color-mix(in srgb, var(--brand) 25%, transparent); transform: translateX(-50%) rotate(45deg); }
+  /* 懸停頭像：圓形變成實心主色，底部名字換成「查看完整經歷 →」；臉不被遮住 */
+  .photo__hover { position: absolute; z-index: 5; left: 10%; right: 10%; bottom: 8%; text-align: center; color: #fff;
+    font-size: 16px; font-weight: 700; letter-spacing: .06em; opacity: 0; transform: translateY(10px);
+    transition: opacity .22s ease, transform .3s cubic-bezier(.33,1,.68,1); }
+  .photo__name { transition: opacity .22s ease .12s, transform .3s cubic-bezier(.33,1,.68,1) .12s; } /* 離開時：文字先收、名字再回來 */
+  .photo:hover .photo__hover, .photo:focus-visible .photo__hover { opacity: 1; transform: none; transition-delay: .12s; } /* 進入時：名字先往上淡出，文字再從下方浮上來 */
+  .photo:hover .photo__name, .photo:focus-visible .photo__name { opacity: 0; transform: translateY(-10px); transition-delay: 0s; }
+  [data-style="circle"] .photo__bg { transition: background .4s ease; }
+  .photo:hover .photo__bg, .photo:focus-visible .photo__bg { background: var(--brand-ink) !important; filter: none !important; }
+  .photo:focus-visible { outline: none; }
+  .photo:focus-visible .photo__bg { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--brand-ink); }
+  /* 有滑鼠的裝置：按鈕整合進頭像，下方不放按鈕；觸控裝置（手機、平板）沒有懸停，保留下方文字連結 */
+  @media (hover: hover) and (pointer: fine) { [data-btn="merge"] .more { display: none; } }
+  @media (hover: none), (pointer: coarse) { [data-btn="merge"] .more a { padding: 0; border: 0; min-height: 40px; font-size: 14px; } }
+  .more a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; font-size: 15px; font-weight: 600; color: var(--brand-ink); text-decoration: none; }
+  /* 按鈕樣式比較：外框膠囊 */
+  [data-btn="outline"] .more a { padding: 0 22px; border: 1px solid color-mix(in srgb, var(--brand-ink) 45%, transparent); border-radius: 999px; transition: background .2s, border-color .2s; }
+  [data-btn="outline"] .card:has(a:hover) .more a { text-decoration: none; background: color-mix(in srgb, var(--brand) 8%, transparent); border-color: var(--brand-ink); }
+  .more a .arrow { transition: transform .25s cubic-bezier(.33,1,.68,1); } /* 動畫規則：指示與位移 0.25 秒 */
+  .more a:hover .arrow { transform: translateX(4px); }
+  .more a:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; }
+
+
+  /* ---- 領域篩選：一條膠囊軌道，選項排成一行；放不下時左右滑動 ---- */
+  .filters-wrap { position: relative; max-width: 100%; width: max-content; margin: 0 0 16px; } /* 跟標題一起靠左 */
+  .filters { display: flex; flex-wrap: nowrap; gap: 2px; padding: 4px; overflow-x: auto; scrollbar-width: none;
+    border-radius: 999px; background: color-mix(in srgb, var(--brand) 6%, #f3f4f6); scroll-behavior: smooth; }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter { flex: none; display: inline-flex; align-items: center; gap: 5px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px;
+    background: transparent; color: var(--body); font: inherit; font-size: 14px; white-space: nowrap; cursor: pointer; transition: background .2s, color .2s; }
+  .filter:hover { color: var(--brand-ink); }
+  .filter[aria-pressed="true"] { background: var(--brand-ink); color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .filter__n { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .filter[aria-pressed="true"] .filter__n { color: rgba(255,255,255,.75); }
+  /* 篩選版本 B：一顆顆獨立的白底膠囊（看得出是按鈕），選中＝淡主色底＋主色框，不用重色 */
+  [data-filter="pill"] .filters { gap: 6px; padding: 2px; background: none; border-radius: 0; }
+  [data-filter="pill"] .filter { min-height: 42px; padding: 0 13px; background: #fff; border: 1px solid #d9dde3;
+    box-shadow: 0 1px 2px rgba(17,24,39,.06); transition: border-color .2s, background .2s, color .2s, box-shadow .2s; }
+  [data-filter="pill"] .filter:hover { border-color: var(--brand-ink); color: var(--brand-ink); box-shadow: 0 2px 6px rgba(17,24,39,.08); }
+  [data-filter="pill"] .filter[aria-pressed="true"] { background: color-mix(in srgb, var(--brand) 10%, white); border-color: var(--brand-ink);
+    color: var(--brand-ink); font-weight: 600; box-shadow: none; }
+  [data-filter="pill"] .filter[aria-pressed="true"] .filter__n { color: var(--brand-ink); opacity: .7; }
+  /* 還有選項藏在右邊（或左邊）時，邊緣淡出提示可以滑 */
+  .filters-wrap.more-r .filters { -webkit-mask: linear-gradient(to right, #000 85%, transparent); mask: linear-gradient(to right, #000 85%, transparent); }
+  .filters-wrap.more-l .filters { -webkit-mask: linear-gradient(to left, #000 85%, transparent); mask: linear-gradient(to left, #000 85%, transparent); }
+  .filters-wrap.more-l.more-r .filters { -webkit-mask: linear-gradient(to right, transparent, #000 15%, #000 85%, transparent); mask: linear-gradient(to right, transparent, #000 15%, #000 85%, transparent); }
+  .filter:focus-visible, .pager button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .filters-wrap { margin-bottom: 40px !important; }
+  .empty { text-align: center; color: var(--muted); padding: 48px 0; }
+
+  /* ---- 分頁 ---- */
+  .pager { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 8px; }
+  .pager:empty { display: none; }
+  .pager__nums { display: flex; gap: 6px; }
+  .pager button { font: inherit; cursor: pointer; border: 1px solid transparent; background: none; color: var(--body); transition: background .2s, border-color .2s, color .2s; }
+  .pager__num { width: 44px; height: 44px; border-radius: 50%; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .pager__num:hover { background: color-mix(in srgb, var(--brand) 8%, transparent); color: var(--brand-ink); }
+  .pager__num[aria-current="page"] { background: var(--brand-ink); color: #fff; font-weight: 600; }
+  .pager__step { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 18px; border-radius: 999px;
+    border-color: var(--line) !important; font-size: 14px; }
+  .pager__step:hover:not(:disabled) { border-color: var(--brand-ink) !important; color: var(--brand-ink); }
+  .pager__step:disabled { opacity: .35; cursor: default; }
+  /* ---- 顯示更多 ---- */
+  .loadmore { display: flex; justify-content: center; margin-top: 8px; }
+  .loadmore:empty { display: none; }
+  .loadmore__btn { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 28px; border-radius: 999px; cursor: pointer;
+    font: inherit; font-size: 15px; font-weight: 600; color: var(--brand-ink); background: #fff; border: 1px solid color-mix(in srgb, var(--brand-ink) 45%, transparent);
+    transition: background .2s, border-color .2s; }
+  .loadmore__btn:hover { background: color-mix(in srgb, var(--brand) 6%, white); border-color: var(--brand-ink); }
+  .loadmore__btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+  .loadmore__n { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .loadmore__arrow { transition: transform .2s; }
+  .loadmore__btn:hover .loadmore__arrow { transform: translateY(3px); }
+  /* ---- 響應式 ---- */
+  @media (max-width: 1023px) {
+    .grid { --gap: 24px; --row-gap: 56px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 var(--gap); }
+  }
+  @media (max-width: 767px) {
+    .grid { --gap: 16px; --row-gap: 48px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--gap); }
+    .photo__name { font-size: 20px; }
+    .photo__initial { font-size: 80px; }
+  }
+  @media (max-width: 639px) {
+    .people { padding: 56px 16px 72px; }
+    .people::before { width: 100%; top: 160px; }
+    .people__title { font-size: 26px; }
+    .people__top { gap: 16px; }
+    .exp { font-size: 13px; }
+    .quote { font-size: 13px; }
+    [data-quote="box"] .quote { padding: 12px 10px; }
+    [data-quote="boxmark"] .quote { padding: 20px 10px 12px; }
+    .filter { padding: 0 14px; }
+    .filters-wrap { margin-bottom: 28px !important; }
+    .pager { gap: 4px; }
+    .pager__txt { display: none; }
+    .pager__step { padding: 0; width: 44px; justify-content: center; }
+    .pager__num { width: 40px; height: 40px; }
+  }
+  /* 圓形底比人像遮罩內縮 1.5px：避免底色從人物邊緣露出一圈細線，看起來像沒對齊 */
+  [data-style="circle"] .photo__bg { inset: calc(20% + 1.5px) 1.5px 1.5px 1.5px !important; }
+</style>
+</head>
+<body>
+
+<div class="toolbar" role="group" aria-label="切換示意主色">
+  預覽用・切換主色：
+  <button style="background:#004896" data-c="#004896" data-ink="#004896" data-deep="#004896" data-accent="#3BB3F0" aria-label="藍 #004896" aria-pressed="true"></button>
+  <button style="background:#C32467" data-c="#C32467" data-ink="#C32467" data-deep="#C32467" data-accent="#FF9A8B" aria-label="桃紅 #C32467"></button>
+  <button style="background:#E58332" data-c="#E58332" data-ink="#A9561A" data-deep="#BF5F14" data-accent="#FFC24B" aria-label="橘 #E58332"></button>
+</div>
+
+<section class="people" id="experts">
+  <div class="people__inner">
+    <header class="people__head">
+      <div class="people__top"><h2 class="people__title">各領域的<span class="hl">師字輩</span>專家</h2><span class="people__line" aria-hidden="true"></span></div>
+      <p class="people__sub">點選領域快速篩選，點卡片看完整簡介與服務項目。</p>
+    </header>
+    <div class="filters-wrap" id="filters-wrap" data-filter="pill"><div class="filters" role="group" aria-label="依領域篩選" id="filters"></div></div>
+    <p class="sr-only" id="result" aria-live="polite"></p>
+    <div class="grid" id="grid" data-quote="box" data-btn="merge" data-tag="chip"></div>
+    <p class="empty" id="empty" hidden>這個領域的專家名單整理中，歡迎先與我們聯繫。</p>
+    <div class="loadmore" id="pager"></div>
+  </div>
+</section>
+
+<script src="people.js"></script>
+<script>
+const FIELDS = ['經營管理','行銷管理','業務管理','專案管理','人力資源','資訊管理','財務管理','研發管理','教育與人才發展'];
+const PEOPLE = window.PEOPLE;
+const grid = document.getElementById('grid');
+let variant = 'circle';
+const state = { field: 'all', page: 1 };   // page＝已經展開到第幾批
+// 一批的人數：電腦、平板 3 排，手機（一排 2 位）4 排
+const perPage = () => { const c = getComputedStyle(grid).gridTemplateColumns.split(' ').length; return c >= 3 ? c * 3 : c * 4; };
+const list = () => state.field === 'all' ? PEOPLE : PEOPLE.filter(p => p.fields.includes(state.field));
+const pageItems = () => list().slice(0, state.page * perPage());
+const cardHTML = p => `
+  <article class="card" data-key="${p.zh}">
+    <h3 class="sr-only">${p.zh}</h3>
+    <a class="photo" href="${p.url}" target="_blank" rel="noopener noreferrer" aria-label="查看完整經歷：${p.zh}（另開新分頁）">
+      <span class="photo__bg" aria-hidden="true"></span>
+      <span class="photo__hover" aria-hidden="true">查看完整經歷 <span class="arrow">→</span></span>
+      ${p.img ? `<span class="photo__person"><img src="img/${p.img}-cut.webp" alt=""></span>` : `<span class="photo__initial" aria-hidden="true"><span>${p.zh[0]}</span></span>`}
+      <span class="photo__name">${p.zh}</span>
+    </a>
+    <ul class="exp">${p.exp.slice(0, 2).map(e => `<li>${e}</li>`).join('')}</ul>
+    <ul class="tags">${p.tags.slice(0, 3).map(t => `<li>${t}</li>`).join('')}</ul>
+    <div class="quote-wrap"><blockquote class="quote">${p.quote ? `<p>${p.quote}</p>` : ''}</blockquote></div>
+    <div class="more"><a href="${p.url}" target="_blank" rel="noopener noreferrer" tabindex="-1" aria-label="查看完整經歷：${p.zh}（另開新分頁）">查看完整經歷 <span class="arrow">→</span></a></div>
+  </article>`;
+
+const filters = document.getElementById('filters'), pager = document.getElementById('pager');
+const result = document.getElementById('result'), empty = document.getElementById('empty');
+filters.innerHTML = ['all', ...FIELDS].map(f => {
+  const n = f === 'all' ? PEOPLE.length : PEOPLE.filter(p => p.fields.includes(f)).length;
+  return `<button type="button" class="filter" data-f="${f}" aria-pressed="${f === 'all'}">${f === 'all' ? '全部領域' : f}<span class="filter__n">${n}</span></button>`;
+}).join('');
+
+function render(scroll) {
+  grid.dataset.style = variant;
+  const all = list(), per = perPage(), pages = Math.max(1, Math.ceil(all.length / per));
+  state.page = Math.min(state.page, pages);
+  grid.innerHTML = pageItems().map(cardHTML).join('');
+  empty.hidden = all.length > 0;
+  const shown = Math.min(all.length, state.page * per), left = all.length - shown;
+  result.textContent = all.length ? `顯示 ${shown} 位，共 ${all.length} 位專家` : '';
+  // 顯示更多：全部顯示後按鈕消失
+  pager.innerHTML = left > 0 ? `<button type="button" class="loadmore__btn">顯示更多專家<span class="loadmore__n">還有 ${left} 位</span><span class="loadmore__arrow" aria-hidden="true">↓</span></button>` : '';
+  if (scroll) document.getElementById('experts').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+/* ===== 動態效果 =====
+   #208 篩選重排：不符合的老師縮小淡出 → 留下的老師滑到新位置 → 新出現的老師放大淡入
+   #104 依序浮現：載入、換頁時，卡片由左到右依序從下方浮上、由模糊變清楚
+   使用者若在系統關閉動態效果，全部直接切換 */
+const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE = 'cubic-bezier(.33,1,.68,1)';
+function staggerIn() {
+  if (reduced()) return;
+  [...grid.children].forEach((c, i) => c.animate(
+    [{ opacity: 0, transform: 'translateY(24px)', filter: 'blur(6px)' }, { opacity: 1, transform: 'none', filter: 'blur(0)' }],
+    { duration: 560, delay: i * 90, easing: EASE, fill: 'backwards' }));
+}
+let busy = false;
+async function reflow() {
+  if (reduced()) { render(); return; }
+  busy = true;
+  const before = new Map([...grid.children].map(c => [c.dataset.key, c.getBoundingClientRect()]));
+  const next = new Set(pageItems().map(p => p.zh));
+  const leaving = [...grid.children].filter(c => !next.has(c.dataset.key));
+  await Promise.all(leaving.map(c => c.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.85)' }],
+    { duration: 220, easing: 'ease-in', fill: 'forwards' }).finished));
+  render();
+  let n = 0;
+  [...grid.children].forEach(c => {
+    const o = before.get(c.dataset.key), r = c.getBoundingClientRect();
+    if (o) { const dx = o.left - r.left, dy = o.top - r.top;
+      if (dx || dy) c.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 480, easing: EASE }); }
+    else c.animate([{ opacity: 0, transform: 'scale(.85)' }, { opacity: 1, transform: 'none' }], { duration: 380, delay: 160 + n++ * 60, easing: EASE, fill: 'backwards' });
+  });
+  busy = false;
+}
+filters.addEventListener('click', e => {
+  const b = e.target.closest('.filter'); if (!b || busy) return;
+  state.field = b.dataset.f; state.page = 1;
+  filters.querySelectorAll('.filter').forEach(x => x.setAttribute('aria-pressed', x === b));
+  reflow();
+});
+pager.addEventListener('click', e => {
+  if (!e.target.closest('.loadmore__btn')) return;
+  const before = grid.children.length;
+  state.page += 1; render();
+  // 只有新長出來的卡片做依序浮現；鍵盤焦點移到第一張新卡片，報讀軟體使用者知道新內容從哪開始
+  const fresh = [...grid.children].slice(before);
+  if (!reduced()) fresh.forEach((c, i) => c.animate([{ opacity: 0, transform: 'translateY(24px)', filter: 'blur(6px)' }, { opacity: 1, transform: 'none', filter: 'blur(0)' }],
+    { duration: 560, delay: i * 70, easing: EASE, fill: 'backwards' }));
+  fresh[0]?.querySelector('.photo')?.focus({ preventScroll: true });
+});
+let lastPer; addEventListener('resize', () => { const p = perPage(); if (p !== lastPer) { lastPer = p; render(); } });
+render(); staggerIn(); lastPer = perPage();
+const fw = document.getElementById('filters-wrap');
+const edge = () => { fw.classList.toggle('more-l', filters.scrollLeft > 2); fw.classList.toggle('more-r', filters.scrollLeft + filters.clientWidth < filters.scrollWidth - 2); };
+filters.addEventListener('scroll', edge); addEventListener('resize', edge); edge();
+// 選到的項目自動捲進可見範圍
+filters.addEventListener('click', e => { const b = e.target.closest('.filter'); b && b.scrollIntoView({ inline: 'nearest', block: 'nearest' }); });
+document.querySelectorAll('#fseg button').forEach(b => b.addEventListener('click', () => {
+  document.getElementById('filters-wrap').dataset.filter = b.dataset.fv; edge();
+  document.querySelectorAll('#fseg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+}));
+document.querySelectorAll('#tagseg button').forEach(b => b.addEventListener('click', () => {
+  grid.dataset.tag = b.dataset.t;
+  document.querySelectorAll('#tagseg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+}));
+document.querySelectorAll('#qseg button').forEach(b => b.addEventListener('click', () => {
+  grid.dataset.quote = b.dataset.q;
+  document.querySelectorAll('#qseg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+}));
+document.querySelectorAll('.seg:not(#btnseg):not(#tagseg):not(#fseg):not(#qseg):not(#pseg):not(#aseg) button').forEach(b => b.addEventListener('click', () => {
+  variant = b.dataset.v; render();
+  document.querySelectorAll('.seg:not(#btnseg):not(#tagseg):not(#fseg):not(#qseg):not(#pseg):not(#aseg) button').forEach(x => x.setAttribute('aria-pressed', x === b));
+}));
+
+document.querySelectorAll('.toolbar > button').forEach(b => b.addEventListener('click', () => {
+  document.documentElement.style.setProperty('--brand', b.dataset.c);
+  document.documentElement.style.setProperty('--brand-ink', b.dataset.ink);
+  document.documentElement.style.setProperty('--brand-deep', b.dataset.deep);
+  document.documentElement.style.setProperty('--accent', b.dataset.accent);
+  document.querySelectorAll('.toolbar > button').forEach(x => x.setAttribute('aria-pressed', x === b));
+}));
+</script>
+</body>
+</html>
