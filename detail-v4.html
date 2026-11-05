@@ -23,12 +23,6 @@
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 8px; }
 
-  /* 預覽工具列 */
-  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; background: #f9fafb; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--muted); }
-  .toolbar button { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer; }
-  .toolbar button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
-  .toolbar a { padding: 4px 12px; border-radius: 999px; text-decoration: none; border: 1px solid var(--line); }
-  .toolbar a[aria-current] { background: var(--ink); color: #fff; border-color: var(--ink); }
 
   /* 共用 */
   .pill { display: inline-flex; align-items: center; padding: 6px 16px; border-radius: 999px; font-size: 14px;
@@ -423,12 +417,6 @@
 </head>
 <body data-tone="light" data-nav="tabs" data-statbox="box">
 
-<div class="toolbar" role="group" aria-label="預覽設定">
-  預覽用・切換主色：
-  <button style="background:#004896" data-c="#004896" data-ink="#004896" data-deep="#004896" data-accent="#3BB3F0" aria-label="藍" aria-pressed="true"></button>
-  <button style="background:#C32467" data-c="#C32467" data-ink="#C32467" data-deep="#C32467" data-accent="#FF9A8B" aria-label="桃紅"></button>
-  <button style="background:#E58332" data-c="#E58332" data-ink="#A9561A" data-deep="#BF5F14" data-accent="#FFC24B" aria-label="橘"></button>
-</div>
 
 <!-- 頁首（logo／主選單）由各站自己的佈景主題提供，不屬於本元件 -->
 <main id="app"></main>
@@ -645,12 +633,8 @@ if (bar) {
   io.observe(document.querySelector('.hero'));
 }
 document.documentElement.style.scrollBehavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-document.querySelectorAll('.toolbar button').forEach(b => b.addEventListener('click', () => {
-  const r = document.documentElement.style;
-  r.setProperty('--brand', b.dataset.c); r.setProperty('--brand-ink', b.dataset.ink);
-  r.setProperty('--brand-deep', b.dataset.deep); r.setProperty('--accent', b.dataset.accent);
-  document.querySelectorAll('.toolbar button').forEach(x => x.setAttribute('aria-pressed', x === b));
-}));
+
 </script>
 </body>
 </html>
+
